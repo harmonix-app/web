@@ -1,4 +1,5 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
+const AUTH_SCOPE = 'user-modify-playback-state user-read-private user-read-email';
 
 async function auth() {
     console.debug("Preparing to authenticate with PCKE security");
@@ -26,7 +27,6 @@ async function auth() {
     const hashed = await sha256(codeVerifier)
     const codeChallenge = base64encode(hashed);
 
-    const scope = 'user-modify-playback-state user-read-private user-read-email';
     const authUrl = new URL("https://accounts.spotify.com/authorize")
 
     window.localStorage.setItem('code_verifier', codeVerifier);
@@ -34,7 +34,7 @@ async function auth() {
     authUrl.search = new URLSearchParams({
         response_type: 'code',
         client_id: CLIENT_ID,
-        scope,
+        scope: AUTH_SCOPE,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
         redirect_uri: 'http://localhost:3000',
@@ -43,10 +43,9 @@ async function auth() {
     window.location.href = authUrl.toString();
 }
 
-function getToken() {
+function getToken(code) {
     console.debug("Fetching token");
     let codeVerifier = localStorage.getItem('code_verifier');
-    let code = urlParams.get('code');
 
     fetch("https://accounts.spotify.com/api/token", {
         method: 'POST',
@@ -63,35 +62,80 @@ function getToken() {
     })
         .then(response => response.json())
         .then(json => {
+            if (json.access_token === undefined) throw new Error("Access token is undefined")
             localStorage.setItem('access_token', json.access_token);
+            localStorage.setItem('token_type', json.token_type);
+            localStorage.setItem('expires_in', json.expires_in);
+            localStorage.setItem('refresh_token', json.refresh_token);
         })
         .catch(e => console.error("Failed to get token:", e));
 }
 
-const urlParams = new URLSearchParams(window.location.search);
+function getRefreshToken(refreshToken) {
+    console.debug("Fetching refresh token");
 
-getToken();
-let accessToken = localStorage.getItem('access_token');
+    fetch("https://accounts.spotify.com/api/token", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        }),
+    })
+        .then(response => response.json())
+        .then(json => {
+            if (json.access_token === undefined) throw new Error("Access token is undefined")
+            localStorage.setItem('access_token', json.access_token);
+            localStorage.setItem('token_type', json.token_type);
+            localStorage.setItem('expires_in', json.expires_in);
+            localStorage.setItem('refresh_token', json.refresh_token);
+        })
+        .catch(e => console.error("Failed to get refresh token:", e));
+}
+
+class NoNameError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "";
+    }
+}
+
+function btn() {
+    const msg = document.getElementById("status");
+
+    fetch("https://api.spotify.com/v1/me/player/pause", {
+        "method": "PUT",
+        "headers": authHeader
+    })
+        .then(response => {
+            if (response.status == 204) throw new NoNameError("Playback paused");
+            return response.json();
+        })
+        .then(json => msg.innerText = JSON.stringify(json))
+        .catch(e => msg.innerText = e);
+}
 
 addEventListener("DOMContentLoaded", function () {
     const uid = document.getElementById('uid');
     const ulm = document.getElementById('ulm');
 
+    if (accessToken === "undefined") return;
+
     console.debug("Sending request to /me to get user details")
     fetch("https://api.spotify.com/v1/me", {
         "method": "GET",
-        "headers": {
-            "Authorization": "Bearer " + accessToken
-        }
+        "headers": authHeader
     })
         .then(response => response.json())
         .then(json => {
             if (json.error) {
                 uid.innerText = `API Error ${json.error.status}`
-                ulm.innerText = `${json.error.message} ${accessToken === "undefined" ? "(are you logged in?)" : ""}`
+                ulm.innerText = json.error.message
                 console.error("API Error at /me:", json.error)
             } else {
-                console.debug("Logged in:", json)
                 uid.innerText = `Logged in as ${json.display_name}`
                 ulm.innerText = json.email
             }
@@ -99,19 +143,12 @@ addEventListener("DOMContentLoaded", function () {
         .catch(e => uid.innerText = `Failed to authenticate:\n${e}`);
 })
 
-function btn() {
-    const msg = document.getElementById("status");
+const code = new URLSearchParams(window.location.search).get('code');
+getToken(code);
+let accessToken = localStorage.getItem('access_token');
 
-    fetch("https://api.spotify.com/v1/me/player/pause", {
-        "method": "PUT",
-        "headers": {
-            "Authorization": "Bearer " + accessToken
-        }
-    })
-        .then(response => {
-            console.log(response);
-            return response.json();
-        })
-        .then(json => msg.innerText = JSON.stringify(json))
-        .catch(e => msg.innerText = "Error: " + e);
+console.log(localStorage)
+
+const authHeader = {
+    "Authorization": localStorage.getItem('token_type') + ' ' + accessToken
 }
