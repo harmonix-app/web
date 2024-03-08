@@ -1,6 +1,13 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
 const AUTH_SCOPE = 'user-modify-playback-state user-read-private user-read-email';
 
+class ExitPromise extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "";
+    }
+}
+
 async function auth() {
     console.debug("Preparing to authenticate with PCKE security");
     const generateRandomString = (length) => {
@@ -62,13 +69,15 @@ function getToken(code) {
     })
         .then(response => response.json())
         .then(json => {
-            if (json.access_token === undefined) throw new Error("Access token is undefined")
-            localStorage.setItem('access_token', json.access_token);
-            localStorage.setItem('token_type', json.token_type);
-            localStorage.setItem('expires_in', json.expires_in);
-            localStorage.setItem('refresh_token', json.refresh_token);
+            if (json.access_token !== undefined) {
+                localStorage.setItem('access_token', json.access_token);
+                localStorage.setItem('token_type', json.token_type);
+                localStorage.setItem('refresh_token', json.refresh_token);
+            }
         })
-        .catch(e => console.error("Failed to get token:", e));
+        .catch(e => {
+            console.error("Failed to get token:", e)
+        });
 }
 
 function getRefreshToken(refreshToken) {
@@ -87,20 +96,13 @@ function getRefreshToken(refreshToken) {
     })
         .then(response => response.json())
         .then(json => {
-            if (json.access_token === undefined) throw new Error("Access token is undefined")
-            localStorage.setItem('access_token', json.access_token);
-            localStorage.setItem('token_type', json.token_type);
-            localStorage.setItem('expires_in', json.expires_in);
-            localStorage.setItem('refresh_token', json.refresh_token);
+            if (json.access_token !== undefined) {
+                localStorage.setItem('access_token', json.access_token);
+                localStorage.setItem('token_type', json.token_type);
+                localStorage.setItem('refresh_token', json.refresh_token);
+            }
         })
         .catch(e => console.error("Failed to get refresh token:", e));
-}
-
-class NoNameError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = "";
-    }
 }
 
 function btn() {
@@ -111,7 +113,7 @@ function btn() {
         "headers": authHeader
     })
         .then(response => {
-            if (response.status == 204) throw new NoNameError("Playback paused");
+            if (response.status == 204) throw new ExitPromise("Playback paused");
             return response.json();
         })
         .then(json => msg.innerText = JSON.stringify(json))
@@ -146,6 +148,8 @@ addEventListener("DOMContentLoaded", function () {
 const code = new URLSearchParams(window.location.search).get('code');
 getToken(code);
 let accessToken = localStorage.getItem('access_token');
+let refreshToken = localStorage.getItem('refresh_token');
+if (refreshToken !== undefined) getRefreshToken(refreshToken);
 
 console.log(localStorage)
 
