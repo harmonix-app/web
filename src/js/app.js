@@ -151,8 +151,6 @@ let accessToken = localStorage.getItem('access_token');
 let refreshToken = localStorage.getItem('refresh_token');
 if (refreshToken !== undefined) getRefreshToken(refreshToken);
 
-console.log(localStorage)
-
 const authHeader = {
     "Authorization": localStorage.getItem('token_type') + ' ' + accessToken
 }
