@@ -114,6 +114,24 @@ function pause() {
         })
         .then(json => statusMsg.innerText = JSON.stringify(json))
         .catch(e => statusMsg.innerText = e);
+    loadPlayerData();
+}
+
+function play() {
+    fetch("https://api.spotify.com/v1/me/player/play", {
+        "method": "PUT",
+        "headers": authHeader
+    })
+        .then(response => {
+            if (response.status == 204) return {
+                success: true,
+                "message": "Playback started or resumed"
+            };
+            return response.json();
+        })
+        .then(json => statusMsg.innerText = JSON.stringify(json))
+        .catch(e => statusMsg.innerText = e);
+    loadPlayerData();
 }
 
 function skipPrevious() {
@@ -130,6 +148,7 @@ function skipPrevious() {
         })
         .then(json => statusMsg.innerText = JSON.stringify(json))
         .catch(e => statusMsg.innerText = e);
+    loadPlayerData();
 }
 
 function skipNext() {
@@ -146,6 +165,7 @@ function skipNext() {
         })
         .then(json => statusMsg.innerText = JSON.stringify(json))
         .catch(e => statusMsg.innerText = e);
+    loadPlayerData();
 }
 
 function loadUserData() {
@@ -173,6 +193,22 @@ function loadUserData() {
         .catch(e => uid.innerText = `Failed to authenticate:\n${e}`);
 }
 
+function formatMillis(ms) {
+    let totalSeconds = Math.floor(ms / 1000);
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    let formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return formattedTime;
+}
+
+function setPlaybackBtn(isPlaying) {
+    const playButton = document.getElementById("btn-play");
+    const pauseButton = document.getElementById("btn-pause");
+
+    playButton.classList.toggle("force-hidden", isPlaying);
+    pauseButton.classList.toggle("force-hidden", !isPlaying);
+}
+
 function loadPlayerData() {
     console.debug("Fetching and loading player data");
 
@@ -180,6 +216,9 @@ function loadPlayerData() {
     const artist = document.getElementById("artist");
     const album = document.getElementById("album");
     const albumCover = document.getElementById("album-cover");
+    const progressText = document.getElementById("song-progress");
+    const durationText = document.getElementById("song-duration");
+    const progressBar = document.getElementById("progress-bar");
 
     fetch("https://api.spotify.com/v1/me/player", {
         "method": "GET",
@@ -200,6 +239,12 @@ function loadPlayerData() {
                 artist.innerText = json.item.artists[0].name;
                 album.innerText = json.item.album.name;
                 albumCover.src = json.item.album.images[0].url;
+
+                progressText.innerText = formatMillis(json.progress_ms);
+                durationText.innerText = formatMillis(json.item.duration_ms);
+                progressBar.style = `width: ${json.progress_ms / json.item.duration_ms * 100}%`;
+
+                setPlaybackBtn(json.is_playing);
             }
         })
         .catch(e => {
@@ -210,6 +255,7 @@ function loadPlayerData() {
 
 addEventListener("DOMContentLoaded", function () {
     statusMsg = document.getElementById("status");
+
     loadUserData();
 
     loadPlayerData();

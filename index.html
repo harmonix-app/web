@@ -26,15 +26,28 @@
 
         <div class="flex items-center space-x-8 backdropfilter backdrop-blur-xl bg-black bg-opacity-20 p-4 rounded-lg text-white">
             <img src="resources/transparent.png" alt="Album cover" id="album-cover" class="rounded-lg w-64 aspect-square bg-black bg-opacity-20">
-            <div class="flex flex-col items-center min-w-72">
-                <h2 class="text-3xl font-semibold" id="song-title"></h2>
-                <p class="text-gray-500" id="artist"></p>
-                <p class="text-gray-500" id="album"></p>
+            <div class="flex flex-col items-center min-w-72 space-y-8">
+                <div>
+                    <h2 class="text-3xl font-semibold" id="song-title"></h2>
+                    <p class="text-gray-500" id="artist"></p>
+                    <p class="text-gray-500" id="album"></p>
+                </div>
 
-                <div class="flex space-x-4 text-3xl items-center text-center mt-8">
+                <div class="flex space-x-4 text-3xl items-center text-center">
                     <i class="fa-solid fa-backward cursor-pointer hover:scale-125 active:scale-100 transition-transform" onclick="skipPrevious()"></i>
-                    <i class="fa-solid fa-pause text-5xl cursor-pointer hover:scale-110 active:scale-100 transition-transform" onclick="pause()"></i>
+                    <i class="fa-solid fa-pause text-5xl cursor-pointer hover:scale-110 active:scale-100 transition-transform" id="btn-pause" onclick="pause()"></i>
+                    <i class="fa-solid fa-play text-5xl cursor-pointer hover:scale-110 active:scale-100 transition-transform force-hidden" id="btn-play" onclick="play()"></i>
                     <i class="fa-solid fa-forward cursor-pointer hover:scale-125 active:scale-100 transition-transform" onclick="skipNext()"></i>
+                </div>
+
+                <div class="w-full space-y-1">
+                    <div class="w-full rounded-full h-2.5 bg-gray-700">
+                        <div class="bg-red-600 h-2.5 rounded-full" style="width: 0%" id="progress-bar"></div>
+                    </div>
+                    <div class="w-full flex justify-between">
+                        <p class="text-left" id="song-progress">-</p>
+                        <p class="text-right" id="song-duration">-</p>
+                    </div>
                 </div>
             </div>
         </div>
