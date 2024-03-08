@@ -1,12 +1,5 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
-const AUTH_SCOPE = 'user-modify-playback-state user-read-private user-read-email';
-
-class ExitPromise extends Error {
-    constructor(message) {
-        super(message);
-        this.name = "";
-    }
-}
+const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email';
 
 async function auth() {
     console.debug("Preparing to authenticate with PCKE security");
@@ -105,7 +98,7 @@ function getRefreshToken(refreshToken) {
         .catch(e => console.error("Failed to get refresh token:", e));
 }
 
-function btn() {
+function pause() {
     const msg = document.getElementById("status");
 
     fetch("https://api.spotify.com/v1/me/player/pause", {
@@ -113,14 +106,53 @@ function btn() {
         "headers": authHeader
     })
         .then(response => {
-            if (response.status == 204) throw new ExitPromise("Playback paused");
+            if (response.status == 204) return {
+                success: true,
+                "message": "Playback paused"
+            };
             return response.json();
         })
         .then(json => msg.innerText = JSON.stringify(json))
         .catch(e => msg.innerText = e);
 }
 
-addEventListener("DOMContentLoaded", function () {
+function skipPrevious() {
+    const msg = document.getElementById("status");
+
+    fetch("https://api.spotify.com/v1/me/player/previous", {
+        "method": "POST",
+        "headers": authHeader
+    })
+        .then(response => {
+            if (response.status == 204) return {
+                success: true,
+                "message": "Command sent"
+            };
+            return response.json();
+        })
+        .then(json => msg.innerText = JSON.stringify(json))
+        .catch(e => msg.innerText = e);
+}
+
+function skipNext() {
+    const msg = document.getElementById("status");
+
+    fetch("https://api.spotify.com/v1/me/player/next", {
+        "method": "POST",
+        "headers": authHeader
+    })
+        .then(response => {
+            if (response.status == 204) return {
+                success: true,
+                "message": "Command sent"
+            };
+            return response.json();
+        })
+        .then(json => msg.innerText = JSON.stringify(json))
+        .catch(e => msg.innerText = e);
+}
+
+function loadUserData() {
     const uid = document.getElementById('uid');
     const ulm = document.getElementById('ulm');
 
@@ -143,6 +175,10 @@ addEventListener("DOMContentLoaded", function () {
             }
         })
         .catch(e => uid.innerText = `Failed to authenticate:\n${e}`);
+}
+
+addEventListener("DOMContentLoaded", function () {
+    loadUserData();
 })
 
 const code = new URLSearchParams(window.location.search).get('code');
