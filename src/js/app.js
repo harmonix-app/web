@@ -100,13 +100,18 @@ addEventListener("DOMContentLoaded", function () {
 })
 
 function btn() {
+    const msg = document.getElementById("status");
+
     fetch("https://api.spotify.com/v1/me/player/pause", {
         "method": "PUT",
         "headers": {
             "Authorization": "Bearer " + accessToken
         }
     })
-        .then(response => response.json())
-        .then(json => console.log(json))
-        .catch(e => console.error("Error :(", e));
+        .then(response => {
+            console.log(response);
+            return response.json();
+        })
+        .then(json => msg.innerText = JSON.stringify(json))
+        .catch(e => msg.innerText = "Error: " + e);
 }
