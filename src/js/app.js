@@ -1,5 +1,7 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
-const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email';
+const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email user-read-playback-state';
+
+var statusMsg = null;
 
 async function auth() {
     console.debug("Preparing to authenticate with PCKE security");
@@ -99,8 +101,6 @@ function getRefreshToken(refreshToken) {
 }
 
 function pause() {
-    const msg = document.getElementById("status");
-
     fetch("https://api.spotify.com/v1/me/player/pause", {
         "method": "PUT",
         "headers": authHeader
@@ -112,13 +112,11 @@ function pause() {
             };
             return response.json();
         })
-        .then(json => msg.innerText = JSON.stringify(json))
-        .catch(e => msg.innerText = e);
+        .then(json => statusMsg.innerText = JSON.stringify(json))
+        .catch(e => statusMsg.innerText = e);
 }
 
 function skipPrevious() {
-    const msg = document.getElementById("status");
-
     fetch("https://api.spotify.com/v1/me/player/previous", {
         "method": "POST",
         "headers": authHeader
@@ -130,13 +128,11 @@ function skipPrevious() {
             };
             return response.json();
         })
-        .then(json => msg.innerText = JSON.stringify(json))
-        .catch(e => msg.innerText = e);
+        .then(json => statusMsg.innerText = JSON.stringify(json))
+        .catch(e => statusMsg.innerText = e);
 }
 
 function skipNext() {
-    const msg = document.getElementById("status");
-
     fetch("https://api.spotify.com/v1/me/player/next", {
         "method": "POST",
         "headers": authHeader
@@ -148,8 +144,8 @@ function skipNext() {
             };
             return response.json();
         })
-        .then(json => msg.innerText = JSON.stringify(json))
-        .catch(e => msg.innerText = e);
+        .then(json => statusMsg.innerText = JSON.stringify(json))
+        .catch(e => statusMsg.innerText = e);
 }
 
 function loadUserData() {
@@ -177,8 +173,47 @@ function loadUserData() {
         .catch(e => uid.innerText = `Failed to authenticate:\n${e}`);
 }
 
+function loadPlayerData() {
+    console.debug("Fetching and loading player data");
+
+    const songTitle = document.getElementById("song-title");
+    const artist = document.getElementById("artist");
+    const album = document.getElementById("album");
+    const albumCover = document.getElementById("album-cover");
+
+    fetch("https://api.spotify.com/v1/me/player", {
+        "method": "GET",
+        "headers": authHeader
+    })
+        .then(response => {
+            if (response.status == 204) return {
+                success: true,
+                "message": "Playback not avaliable or active"
+            };
+            return response.json();
+        })
+        .then(json => {
+            if (json.item == null) {
+                songTitle.innerText = "Not Playing"
+            } else {
+                songTitle.innerText = json.item.name;
+                artist.innerText = json.item.artists[0].name;
+                album.innerText = json.item.album.name;
+                albumCover.src = json.item.album.images[0].url;
+            }
+        })
+        .catch(e => {
+            statusMsg.innerText = e;
+            console.error("Error while loading player data:", e);
+        });
+}
+
 addEventListener("DOMContentLoaded", function () {
+    statusMsg = document.getElementById("status");
     loadUserData();
+
+    loadPlayerData();
+    setInterval(loadPlayerData, 1000);
 })
 
 const code = new URLSearchParams(window.location.search).get('code');
