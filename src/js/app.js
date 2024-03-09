@@ -241,7 +241,7 @@ function loadPlayerData() {
         })
         .then(json => {
             if (json.item == null) {
-                setPlayerData("Not Playing", "", "resources/transparent.png", 0, 0);
+                setPlayerData("Not Playing", "", "resources/transparent.png", 0, 1);
                 setPlaybackBtn(false);
             } else {
                 setPlayerData(json.item.name, json.item.artists[0].name, json.item.album.images[0].url, json.progress_ms, json.item.duration_ms);
