@@ -11,6 +11,8 @@ function setStatus(s) {
     } else {
         statusMsg.innerText = s;
     }
+
+    setTimeout(statusMsg.innerText = "", 2000);
 }
 
 
@@ -216,6 +218,37 @@ function setPlaybackBtn(isPlaying) {
     pauseButton.classList.toggle("force-hidden", !isPlaying);
 }
 
+let bpmAnimInterval;
+let animOnHalfBeat = false;
+let lastSongId = -1;
+
+function toggleAnimOnHalfBeat() {
+    console.debug("Setting animOnHalfBeat to " + !animOnHalfBeat)
+    setStatus(!animOnHalfBeat ? "Pulsing on half-beats" : "Pulsing on beats")
+    animOnHalfBeat = !animOnHalfBeat;
+    initBpmAnimation(lastSongId);
+}
+
+function initBpmAnimation(trackId) {
+    console.log("Initializing BPM animation for track " + trackId);
+    fetch("https://api.spotify.com/v1/audio-features/" + trackId, {
+        "method": "GET",
+        "headers": authHeader
+    })
+        .then(response => response.json())
+        .then(json => {
+            clearInterval(bpmAnimInterval);
+
+            bpmAnimInterval = setInterval(function() {
+                albumCover.classList.add("scale-105");
+                setTimeout(function() {
+                    albumCover.classList.remove("scale-105");
+                }, 200)
+            }, 60000 / json.tempo * (animOnHalfBeat ? 1 : 2));
+        })
+        .catch(e => setStatus(e));
+}
+
 function setPlayerData(trackName, artistName, albumCoverUrl, progressMs, durationMs) {
     songTitle.innerText = trackName;
     topTrackOrder.innerText = `#${topTracks.indexOf(trackName) + 1}`
@@ -233,7 +266,6 @@ function setPlayerData(trackName, artistName, albumCoverUrl, progressMs, duratio
     durationText.innerText = formatMillis(durationMs);
     progressBar.style = `width: ${progressMs / durationMs * 100}%`;
 }
-
 function loadPlayerData() {
     console.debug("Fetching and loading player data");
 
@@ -255,6 +287,9 @@ function loadPlayerData() {
             } else {
                 setPlayerData(json.item.name, json.item.artists[0].name, json.item.album.images[0].url, json.progress_ms, json.item.duration_ms);
                 setPlaybackBtn(json.is_playing);
+
+                if (lastSongId != json.item.id) initBpmAnimation(json.item.id);
+                lastSongId = json.item.id;
             }
         })
         .catch(e => {
@@ -276,17 +311,17 @@ function storeTopItems() {
             setStatus(e);
             console.error("Error while fetching user's top artists:", e);
         });
-        
+
     fetch("https://api.spotify.com/v1/me/top/tracks", {
-            "method": "GET",
-            "headers": authHeader
-        })
-            .then(response => response.json())
-            .then(json => topTracks = json.items.map(track => track.name))
-            .catch(e => {
-                setStatus(e);
-                console.error("Error while fetching user's top tracks:", e);
-            });
+        "method": "GET",
+        "headers": authHeader
+    })
+        .then(response => response.json())
+        .then(json => topTracks = json.items.map(track => track.name))
+        .catch(e => {
+            setStatus(e);
+            console.error("Error while fetching user's top tracks:", e);
+        });
 }
 
 addEventListener("DOMContentLoaded", function () {
@@ -305,7 +340,8 @@ addEventListener("DOMContentLoaded", function () {
     loadPlayerData();
     setInterval(loadPlayerData, 1000);
 
-    storeTopItems();})
+    storeTopItems();
+})
 
 const code = new URLSearchParams(window.location.search).get('code');
 getToken(code);
