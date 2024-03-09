@@ -1,5 +1,6 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
 const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email user-read-playback-state user-top-read';
+const REDIRECT_URI = "https://harmonix-web.github.io/web"
 
 var songTitle, artist, albumCover, progressText, durationText, progressBar, statusMsg, topTrackOrder, topArtistOrder;
 var topArtists = [], topTracks = [];
@@ -52,7 +53,7 @@ async function auth() {
         scope: AUTH_SCOPE,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
-        redirect_uri: window.location.href,
+        redirect_uri: REDIRECT_URI,
     }).toString();
 
     window.location.href = authUrl.toString();
@@ -71,7 +72,7 @@ function getToken(code) {
             client_id: CLIENT_ID,
             grant_type: 'authorization_code',
             code,
-            redirect_uri: window.location.href,
+            redirect_uri: REDIRECT_URI,
             code_verifier: codeVerifier,
         }),
     })
