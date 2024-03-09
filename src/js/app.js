@@ -171,6 +171,7 @@ function skipNext() {
 function loadUserData() {
     const uid = document.getElementById('uid');
     const ulm = document.getElementById('ulm');
+    const pfp = document.getElementById('pfp');
 
     if (accessToken === "undefined") return;
 
@@ -182,12 +183,12 @@ function loadUserData() {
         .then(response => response.json())
         .then(json => {
             if (json.error) {
-                uid.innerText = `API Error ${json.error.status}`
-                ulm.innerText = json.error.message
+                uid.innerText = "Log In"
                 console.error("API Error at /me:", json.error)
             } else {
                 uid.innerText = `Logged in as ${json.display_name}`
                 ulm.innerText = json.email
+                pfp.src = json.images[0].url;
             }
         })
         .catch(e => uid.innerText = `Failed to authenticate:\n${e}`);
@@ -214,7 +215,6 @@ function loadPlayerData() {
 
     const songTitle = document.getElementById("song-title");
     const artist = document.getElementById("artist");
-    const album = document.getElementById("album");
     const albumCover = document.getElementById("album-cover");
     const progressText = document.getElementById("song-progress");
     const durationText = document.getElementById("song-duration");
@@ -237,7 +237,6 @@ function loadPlayerData() {
             } else {
                 songTitle.innerText = json.item.name;
                 artist.innerText = json.item.artists[0].name;
-                album.innerText = json.item.album.name;
                 albumCover.src = json.item.album.images[0].url;
 
                 progressText.innerText = formatMillis(json.progress_ms);
