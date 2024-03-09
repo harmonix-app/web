@@ -1,7 +1,17 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
 const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email user-read-playback-state';
 
-var statusMsg = null;
+let songTitle, artist, albumCover, progressText, durationText, progressBar, statusMsg = null;
+
+function setStatus(s) {
+    // FIXME: good luck lmao
+    if (s.success == true && s.message) {
+        statusMsg.innerText = s.message;
+    } else {
+        statusMsg.innerText = s;
+    }
+}
+
 
 async function auth() {
     console.debug("Preparing to authenticate with PCKE security");
@@ -110,10 +120,8 @@ function pause() {
                 success: true,
                 "message": "Playback paused"
             };
-            return response.json();
         })
-        .then(json => statusMsg.innerText = JSON.stringify(json))
-        .catch(e => statusMsg.innerText = e);
+        .catch(e => JSON.stringify(e));
     loadPlayerData();
 }
 
@@ -129,8 +137,7 @@ function play() {
             };
             return response.json();
         })
-        .then(json => statusMsg.innerText = JSON.stringify(json))
-        .catch(e => statusMsg.innerText = e);
+        .catch(e => setStatus(e));
     loadPlayerData();
 }
 
@@ -146,8 +153,7 @@ function skipPrevious() {
             };
             return response.json();
         })
-        .then(json => statusMsg.innerText = JSON.stringify(json))
-        .catch(e => statusMsg.innerText = e);
+        .catch(e => setStatus(e));
     loadPlayerData();
 }
 
@@ -163,8 +169,7 @@ function skipNext() {
             };
             return response.json();
         })
-        .then(json => statusMsg.innerText = JSON.stringify(json))
-        .catch(e => statusMsg.innerText = e);
+        .catch(e => setStatus(e));
     loadPlayerData();
 }
 
@@ -210,15 +215,18 @@ function setPlaybackBtn(isPlaying) {
     pauseButton.classList.toggle("force-hidden", !isPlaying);
 }
 
+function setPlayerData(songName, artistName, albumCoverUrl, progressMs, durationMs) {
+    songTitle.innerText = songName;
+    artist.innerText = artistName;
+    albumCover.src = albumCoverUrl;
+
+    progressText.innerText = formatMillis(progressMs);
+    durationText.innerText = formatMillis(durationMs);
+    progressBar.style = `width: ${progressMs / durationMs * 100}%`;
+}
+
 function loadPlayerData() {
     console.debug("Fetching and loading player data");
-
-    const songTitle = document.getElementById("song-title");
-    const artist = document.getElementById("artist");
-    const albumCover = document.getElementById("album-cover");
-    const progressText = document.getElementById("song-progress");
-    const durationText = document.getElementById("song-duration");
-    const progressBar = document.getElementById("progress-bar");
 
     fetch("https://api.spotify.com/v1/me/player", {
         "method": "GET",
@@ -233,27 +241,27 @@ function loadPlayerData() {
         })
         .then(json => {
             if (json.item == null) {
-                songTitle.innerText = "Not Playing"
+                setPlayerData("Not Playing", "", "resources/transparent.png", 0, 0);
+                setPlaybackBtn(false);
             } else {
-                songTitle.innerText = json.item.name;
-                artist.innerText = json.item.artists[0].name;
-                albumCover.src = json.item.album.images[0].url;
-
-                progressText.innerText = formatMillis(json.progress_ms);
-                durationText.innerText = formatMillis(json.item.duration_ms);
-                progressBar.style = `width: ${json.progress_ms / json.item.duration_ms * 100}%`;
-
+                setPlayerData(json.item.name, json.item.artists[0].name, json.item.album.images[0].url, json.progress_ms, json.item.duration_ms);
                 setPlaybackBtn(json.is_playing);
             }
         })
         .catch(e => {
-            statusMsg.innerText = e;
+            setStatus(e);
             console.error("Error while loading player data:", e);
         });
 }
 
 addEventListener("DOMContentLoaded", function () {
     statusMsg = document.getElementById("status");
+    songTitle = document.getElementById("song-title");
+    artist = document.getElementById("artist");
+    albumCover = document.getElementById("album-cover");
+    progressText = document.getElementById("song-progress");
+    durationText = document.getElementById("song-duration");
+    progressBar = document.getElementById("progress-bar");
 
     loadUserData();
 
