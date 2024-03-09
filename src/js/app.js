@@ -52,7 +52,7 @@ async function auth() {
         scope: AUTH_SCOPE,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
-        redirect_uri: 'http://localhost:3000',
+        redirect_uri: window.location.href,
     }).toString();
 
     window.location.href = authUrl.toString();
@@ -71,7 +71,7 @@ function getToken(code) {
             client_id: CLIENT_ID,
             grant_type: 'authorization_code',
             code,
-            redirect_uri: "http://localhost:3000",
+            redirect_uri: window.location.href,
             code_verifier: codeVerifier,
         }),
     })
