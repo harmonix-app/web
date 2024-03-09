@@ -1,7 +1,8 @@
 const CLIENT_ID = 'f5261a72ae4d4dab8a746aeec4dd3b4b';
-const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email user-read-playback-state';
+const AUTH_SCOPE = 'user-modify-playback-state user-read-playback-state user-read-private user-read-email user-read-playback-state user-top-read';
 
-let songTitle, artist, albumCover, progressText, durationText, progressBar, statusMsg = null;
+var songTitle, artist, albumCover, progressText, durationText, progressBar, statusMsg, topTrackOrder, topArtistOrder;
+var topArtists = [], topTracks = [];
 
 function setStatus(s) {
     // FIXME: good luck lmao
@@ -215,9 +216,17 @@ function setPlaybackBtn(isPlaying) {
     pauseButton.classList.toggle("force-hidden", !isPlaying);
 }
 
-function setPlayerData(songName, artistName, albumCoverUrl, progressMs, durationMs) {
-    songTitle.innerText = songName;
+function setPlayerData(trackName, artistName, albumCoverUrl, progressMs, durationMs) {
+    songTitle.innerText = trackName;
+    topTrackOrder.innerText = `#${topTracks.indexOf(trackName) + 1}`
+    if (topTrackOrder.innerText == "#0") topTrackOrder.innerText = "";
+    songTitle.classList.toggle("text-gold", topTracks.includes(trackName));
+
     artist.innerText = artistName;
+    topArtistOrder.innerText = `#${topArtists.indexOf(artistName) + 1}`
+    if (topArtistOrder.innerText == "#0") topArtistOrder.innerText = "";
+    artist.classList.toggle("text-darker-gold", topArtists.includes(artistName));
+
     albumCover.src = albumCoverUrl;
 
     progressText.innerText = formatMillis(progressMs);
@@ -254,6 +263,32 @@ function loadPlayerData() {
         });
 }
 
+function storeTopItems() {
+    console.debug("Fetching and storing user's top artists and tracks")
+
+    fetch("https://api.spotify.com/v1/me/top/artists", {
+        "method": "GET",
+        "headers": authHeader
+    })
+        .then(response => response.json())
+        .then(json => topArtists = json.items.map(artist => artist.name))
+        .catch(e => {
+            setStatus(e);
+            console.error("Error while fetching user's top artists:", e);
+        });
+        
+    fetch("https://api.spotify.com/v1/me/top/tracks", {
+            "method": "GET",
+            "headers": authHeader
+        })
+            .then(response => response.json())
+            .then(json => topTracks = json.items.map(track => track.name))
+            .catch(e => {
+                setStatus(e);
+                console.error("Error while fetching user's top tracks:", e);
+            });
+}
+
 addEventListener("DOMContentLoaded", function () {
     statusMsg = document.getElementById("status");
     songTitle = document.getElementById("song-title");
@@ -262,12 +297,15 @@ addEventListener("DOMContentLoaded", function () {
     progressText = document.getElementById("song-progress");
     durationText = document.getElementById("song-duration");
     progressBar = document.getElementById("progress-bar");
+    topTrackOrder = document.getElementById("top-track-order");
+    topArtistOrder = document.getElementById("top-artist-order");
 
     loadUserData();
 
     loadPlayerData();
     setInterval(loadPlayerData, 1000);
-})
+
+    storeTopItems();})
 
 const code = new URLSearchParams(window.location.search).get('code');
 getToken(code);

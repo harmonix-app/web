@@ -5,3 +5,15 @@
 .force-hidden {
     display: none !important;
 }
+
+.top-item {
+    @apply bg-gradient-to-br text-transparent bg-clip-text;
+}
+
+.text-gold {
+    @apply top-item from-orange-300 to-orange-600;
+}
+
+.text-darker-gold {
+    @apply top-item from-orange-600 to-orange-800;
+}
