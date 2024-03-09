@@ -26,8 +26,8 @@
     <div class="bg-gradient-to-t from-neutral-950 to-neutral-900 min-h-screen text-center items-center flex flex-col pt-24 space-y-2">
         <p class="text-gray-400" id="status"></p>
 
-        <div class="flex items-center space-x-8 backdropfilter backdrop-blur-xl bg-black bg-opacity-20 p-4 rounded-lg text-white">
-            <img src="resources/transparent.png" alt="Album cover" id="album-cover" class="rounded-lg w-64 aspect-square bg-black bg-opacity-20 transition-all cursor-pointer hover:scale-110 active:scale-90" onclick="toggleAnimOnHalfBeat()">
+        <div class="flex flex-col sm:flex-row items-center sm:space-x-8 backdropfilter backdrop-blur-xl bg-black bg-opacity-20 p-4 rounded-lg text-white">
+            <img src="resources/transparent.png" alt="Album cover" id="album-cover" class="rounded-lg w-72 sm:w-64 aspect-square bg-neutral-700 bg-opacity-20 transition-all cursor-pointer hover:scale-110 active:scale-90 mb-4 sm:mb-0" onclick="toggleAnimOnHalfBeat()">
             <div class="flex flex-col items-center min-w-72 space-y-8">
                 <div class="flex flex-col items-center">
                     <div class="group flex items-center">
@@ -60,8 +60,9 @@
         </div>
     </div>
 
-    <footer class="bg-red-900 p-5 text-center">
-        <p class="text-sm">© 2024 Logan Dhillon. All rights reserved.</p>
+    <footer class="bg-red-900 p-5 text-center space-y-1">
+        <p class="text-sm">© 2024 <a href="https://logandhillon.github.io" class="font-semibold underline hover:text-base transition-all">Logan Dhillon</a>. All rights reserved. <a href="https://harmonix-app.github.io" class="font-semibold underline hover:text-base transition-all">Harmonix</a> Web v0.1.0-alpha.</p>
+        <p class="text-sm">This software is in development! Report bugs, issues, and feature requests <a href="https://github.com/harmonix-app/web/issues/new" class="font-semibold underline hover:text-base transition-all">here</a>.</p>
     </footer>
 </body>
 </html>

@@ -210,12 +210,14 @@ function formatMillis(ms) {
     return formattedTime;
 }
 
-function setPlaybackBtn(isPlaying) {
+function setPlaybackState(isPlaying) {
     const playButton = document.getElementById("btn-play");
     const pauseButton = document.getElementById("btn-pause");
 
     playButton.classList.toggle("force-hidden", isPlaying);
     pauseButton.classList.toggle("force-hidden", !isPlaying);
+
+    albumCover.classList.toggle("scale-90", !isPlaying);
 }
 
 let bpmAnimInterval;
@@ -283,10 +285,10 @@ function loadPlayerData() {
         .then(json => {
             if (json.item == null) {
                 setPlayerData("Not Playing", "", "resources/transparent.png", 0, 1);
-                setPlaybackBtn(false);
+                setPlaybackState(false);
             } else {
                 setPlayerData(json.item.name, json.item.artists[0].name, json.item.album.images[0].url, json.progress_ms, json.item.duration_ms);
-                setPlaybackBtn(json.is_playing);
+                setPlaybackState(json.is_playing);
 
                 if (lastSongId != json.item.id) initBpmAnimation(json.item.id);
                 lastSongId = json.item.id;
